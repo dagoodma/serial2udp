@@ -1,3 +1,8 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
+
 // Required by Windows compilation to specify the version of Windows being targeted. In this case Windows XP.
 #ifdef WIN32
 #define _WIN32_WINNT 0x0501

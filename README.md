@@ -2,6 +2,10 @@
 
 This project converts a serial port into a UDP port in software. It is used for various autonomous systems projects that require interfacing with Simulink to avoid issues with the serial port on some platforms.
 
+## License/distribution
+
+This project follows the terms of the Mozilla Public License v2.0. Any distribution of the source code of this project must follow those licensing terms.
+
 ## Usage
 
 This program is run on the command line and all CLI options are enumerated when the program is run without options. Specifying -h or --help at the command line will also list all options.
