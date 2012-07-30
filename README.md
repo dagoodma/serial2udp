@@ -15,13 +15,13 @@ side it must be larger than the largest expected UDP datagram size otherwise the
 
 ## Building
 
-#### Windows 64-bit
+### Windows 64-bit
 
 Prerequisites:
  - Compiler: Only tested with Microsoft Visual Studio 2010
  - Boost library 
 
-### Install Boost (http://www.boost.org/)
+#### Install Boost (http://www.boost.org/)
 1. Download the Boost library from boost.org
 2. Extract the library to C:\boost_1_48_0_x64 (changing 1_48 to whatever your version is)
 3. (Following the build instructions for x86-64 1.48) Open a command prompt and enter the root directory of the Boost files.
@@ -29,7 +29,7 @@ Prerequisites:
 5. Compile for x86-64 by running `bjam msvc-10.0 variant=release link=static threading=multi runtime-link=static architecture=x86 address-mode=64-bit --stage-dir=stage64`
   - This will build only the multi-threaded statically-linked release build that is necessary for this project. If you'd like to use this Boost installation for debugging or other projects you'll probably want to just build everything by switching out the 'variant=release link=static threading=multi runtime-link=static' options for '--build-type=complete' instead.
 
-### Building the program
+#### Building the program
 
 I have only tested this program on 64-bit Windows and as such have no instructions for compiling on other platforms. This program only relies on standard library functions as well as the cross-platform C++ library Boost and as such should be retargetable to many platforms.
 
@@ -57,13 +57,13 @@ I only include instructions for building this project for x64 as that is my prim
   - The executeable will be in '/x64/Release/'
 
 
-#### Mac OS X 10.6.8 (Snow Leopard) 32-bit (i386)
+### Mac OS X 10.6.8 (Snow Leopard) 32-bit (i386)
 
 Prerequisites:
  - Compiler: Only tested with g++
  - Boost library 
 
-### Install Boost (http://www.boost.org/)
+#### Install Boost (http://www.boost.org/)
 
 Installing Boost with a package manager such as MacPorts, Fink, or Homebrew should also work, but I kept seeing 'unsupported file format' warnings and undefined symbols when attempting to link the Boost libraries. Thus it is recommended to build Boost from source:
 
@@ -74,13 +74,13 @@ Installing Boost with a package manager such as MacPorts, Fink, or Homebrew shou
 5. Compile for x86 by running `sudo ./b2 variant=release link=static threading=multi runtime-link=static architecture=x86`
   - This will build only the multi-threaded statically-linked release build that is necessary for this project. Also, I was seeing permission denied messages without 'sudo'.
 
-### Building the program
+#### Building the program
 
 I have only tested this program on 32-bit Snow Leopard, but should be retargetable to other versions of Mac OS X.
 
 1. In a terminal window change into the directory where 'serial2udp.cpp' is.
-2. Compile the program
-  - Run `g++ -v -m32 -I/Users/me/Downloads/boost_1_50_0 serial2udp.cpp -o serial2udp -L/Users/me/Downloads/boost_1_50_0/stage/lib -lboost_program_options -lboost_date_time -lboost_system`
+2. Compile by running `g++ -v -m32 -I/Users/me/Downloads/boost_1_50_0 serial2udp.cpp -o serial2udp`
+    `-L/Users/me/Downloads/boost_1_50_0/stage/lib -lboost_program_options -lboost_date_time -lboost_system`
 3. Run it
   - The binary is called 'serial2udp'
 
