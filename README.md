@@ -15,6 +15,8 @@ side it must be larger than the largest expected UDP datagram size otherwise the
 
 ## Building
 
+#### Windows 64-bit
+
 Prerequisites:
  - Compiler: Only tested with Microsoft Visual Studio 2010
  - Boost library 
@@ -30,8 +32,6 @@ Prerequisites:
 ### Building the program
 
 I have only tested this program on 64-bit Windows and as such have no instructions for compiling on other platforms. This program only relies on standard library functions as well as the cross-platform C++ library Boost and as such should be retargetable to many platforms.
-
-#### Windows 64-bit
 
 I only include instructions for building this project for x64 as that is my primary target. This code should compile for x86 if you have the x86 build of Boost available.
 
@@ -55,3 +55,32 @@ I only include instructions for building this project for x64 as that is my prim
   - Ctrl-Shift-B or Build->Build Solution
 9. Run it
   - The executeable will be in '/x64/Release/'
+
+
+#### Mac OS X 10.6.8 (Snow Leopard) 32-bit (i386)
+
+Prerequisites:
+ - Compiler: Only tested with g++
+ - Boost library 
+
+### Install Boost (http://www.boost.org/)
+
+Installing Boost with a package manager such as MacPorts, Fink, or Homebrew should also work, but I kept seeing 'unsupported file format' warnings and undefined symbols when attempting to link the Boost libraries. Thus it is recommended to build Boost from source:
+
+1. Download the Boost library from boost.org
+2. Extract the library to a folder in your user directory (ie. ~/Downloads)
+3. (Following the build instructions for x86 1.50) Open a terminal window (Applications > Utilities > Terminal) and change to the root directory where you extracted the Boost files.
+4. Run `./bootstrap.sh`
+5. Compile for x86 by running `sudo ./b2 variant=release link=static threading=multi runtime-link=static architecture=x86`
+  - This will build only the multi-threaded statically-linked release build that is necessary for this project. Also, I was seeing permission denied messages without 'sudo'.
+
+### Building the program
+
+I have only tested this program on 32-bit Snow Leopard, but should be retargetable to other versions of Mac OS X.
+
+1. In a terminal window change into the directory where 'serial2udp.cpp' is.
+2. Compile the program
+  - Run `g++ -v -m32 -I/Users/me/Downloads/boost_1_50_0 serial2udp.cpp -o serial2udp -L/Users/me/Downloads/boost_1_50_0/stage/lib -lboost_program_options -lboost_date_time -lboost_system`
+3. Run it
+  - The binary is called 'serial2udp'
+
