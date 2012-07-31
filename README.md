@@ -85,3 +85,17 @@ I have only tested this program on 32-bit Snow Leopard, but should be retargetab
 3. Run it
   - The binary is called 'serial2udp'
 
+### Mac OS X 10.7.4 (Lion) 64-bit (x86-64)
+
+Prerequisites:
+ - Compiler: Only tested with g++
+ - Boost library
+
+#### Install Boost
+
+Follow the directions for 32-bit OS X except for the following changes:
+1. In step 5 add the address-model argument `address-model=64`
+
+#### Building serial2udp 
+
+1. Compile like in Step 2 for 32-bit OS X, but specify `-m64` instead for 64-bit addressing.
