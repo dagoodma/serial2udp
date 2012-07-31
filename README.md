@@ -81,6 +81,7 @@ I have only tested this program on 32-bit Snow Leopard, but should be retargetab
 1. In a terminal window change into the directory where 'serial2udp.cpp' is.
 2. Compile by running `g++ -v -m32 -I/Users/me/Downloads/boost_1_50_0 serial2udp.cpp -o serial2udp`
     `-L/Users/me/Downloads/boost_1_50_0/stage/lib -lboost_program_options -lboost_date_time -lboost_system`
+   * Note that you'll need to use a full path for the `-L` and `-I` and cannot use `~`.
 3. Run it
   - The binary is called 'serial2udp'
 
