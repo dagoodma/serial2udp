@@ -16,6 +16,8 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/program_options.hpp>
 
+#include "Hil.h"
+
 // Set up some shorthand for namespaces
 namespace po = boost::program_options;
 
@@ -27,7 +29,8 @@ boost::asio::ip::udp::socket *udpSocket;
 boost::asio::serial_port *serialPort;
 
 // Intermediate internal variables
-boost::asio::ip::udp::endpoint remote_endpoint;
+boost::asio::ip::udp::endpoint remote_endpoint_tx;
+boost::asio::ip::udp::endpoint remote_endpoint_rx;
 char *udp_receive_buffer;
 char *serial_receive_buffer;
 
@@ -51,6 +54,7 @@ int opt_serial_packet_size;
 
 int main(int ac, char* av[])
 {
+	// Manage program startup.
 	try {
 
 		// Declare the supported options.
@@ -59,11 +63,11 @@ int main(int ac, char* av[])
 			("help", "produce help message")
 			("port", po::value<string>(&opt_port)->default_value("COM1"), "serial port to use")
 			("baud_rate", po::value<int>(&opt_baud_rate)->default_value(115200), "set the serial port baud rate")
-			("serial_packet_size", po::value<int>(&opt_serial_packet_size)->default_value(34), "size of the serial packets to be expected (<= 128)")
-			("local_socket", po::value<int>(&opt_local_socket)->default_value(15000), "local UDP socket to use")
+			("serial_packet_size", po::value<int>(&opt_serial_packet_size)->default_value(22), "size of the serial packets to be expected (<= 128)")
+			("local_socket", po::value<int>(&opt_local_socket)->default_value(14550), "local UDP socket to use")
 			("remote_socket", po::value<int>(&opt_remote_socket)->default_value(16000), "remote UDP socket to use")
 			("remote_addr", po::value<string>(&opt_remote_addr)->default_value("127.0.0.1"), "remote IP address")
-			("udp_packet_size", po::value<int>(&opt_udp_packet_size)->default_value(46), "size of a UDP datagram in bytes (<= 128)")
+			("udp_packet_size", po::value<int>(&opt_udp_packet_size)->default_value(28), "size of a UDP datagram in bytes (<= 128)")
 		;
 
 		// Now parse the user-specified options
@@ -74,27 +78,49 @@ int main(int ac, char* av[])
 		// If the help menu was specified, spit out the help text and quit.
 		if (vm.count("help")) {
 			cout << desc << "\n";
-			return 1;
+			return 0;
 		}
 
 		udp_receive_buffer = new char[opt_udp_packet_size];
 		if (udp_receive_buffer == NULL) {
-			cout << "ERROR: Could not allocate enough space for a UDP receive buffer of that size." << endl;
+			cerr << "ERROR: Could not allocate enough space for a UDP receive buffer of that size." << endl;
+			return 3;
 		}
 		
 		serial_receive_buffer = new char[opt_serial_packet_size];
 		if (serial_receive_buffer == NULL) {
-			cout << "ERROR: Could not allocate enough space for a serial receive buffer of that size." << endl;
+			cerr << "ERROR: Could not allocate enough space for a serial receive buffer of that size." << endl;
+			return 2;
 		}
 
-		// Set up the endpoints. These are the local and remote server definitions (IP + socket)
-		remote_endpoint = boost::asio::ip::udp::endpoint(boost::asio::ip::address_v4::from_string(opt_remote_addr), opt_remote_socket);
-
-		// Start a Boost IO service and attach a new UDP socket and serial port to it.
-		boost::asio::io_service io_service;
-
-		udpSocket = new boost::asio::ip::udp::socket(io_service, boost::asio::ip::udp::endpoint(boost::asio::ip::address_v4::loopback(), opt_local_socket));
+	} catch (exception& e) {
+		cerr << e.what() << endl;
+		return 1;
+	}
 	
+	// Create and start the UDP socket.
+	boost::asio::io_service io_service;
+	try {
+		// Set up the endpoints. These are the local and remote server definitions (IP + socket)
+		remote_endpoint_tx = boost::asio::ip::udp::endpoint(boost::asio::ip::address_v4::from_string(opt_remote_addr), opt_remote_socket);
+		remote_endpoint_rx = boost::asio::ip::udp::endpoint(boost::asio::ip::address_v4::from_string(opt_remote_addr), 0);
+
+		// Start a Boost IO service and attach a new UDP socket
+		udpSocket = new boost::asio::ip::udp::socket(io_service, boost::asio::ip::udp::endpoint(boost::asio::ip::address_v4::loopback(), opt_local_socket));
+		start_udp_receive();
+
+	} catch (exception& e) {
+		cerr << "Failed to start UDP socket on local port " << opt_local_socket << "." << endl;
+		return 1;
+	}
+	
+	cout << "Listening at localhost:" << opt_local_socket << "." << endl;
+	cout << "Listening for messages from " << opt_remote_addr << ", any port." << endl;
+	cout << "Transmitting to " << opt_remote_addr << ":" << opt_remote_socket << "." << endl; 
+
+	/*
+	// Create and start the serial port.
+	try {
 		serialPort = new boost::asio::serial_port(io_service, opt_port);
 
 		// Configure the options for the serial port. I was having problems with the default options for one
@@ -106,14 +132,19 @@ int main(int ac, char* av[])
 		serialPort->set_option(boost::asio::serial_port::character_size(8));
 
 		// Set up event handlers for receiving data on both ends
-		start_udp_receive();
 		start_serial_receive();
 
+	} catch (exception& e) {
+		cerr << "Failed to open serial port: " << opt_port << ". Does it exist?" << endl;
+		return 1;
+	}
+	*/
+	try {
 		// Then start everything running
 		io_service.run();
-
 	} catch (exception& e) {
 		cerr << e.what() << endl;
+		return 1;
 	}
 
 	return 0;
@@ -126,7 +157,7 @@ void start_udp_receive()
 {
 	udpSocket->async_receive_from(
 		boost::asio::buffer(udp_receive_buffer, opt_udp_packet_size), 
-		remote_endpoint,
+		remote_endpoint_rx,
 		&handle_udp_receive
 	);
 }
@@ -149,14 +180,28 @@ void start_serial_receive()
  */
 void handle_udp_receive(const boost::system::error_code& error, size_t bytes_transferred)
 {
-	// Once a UDP datagram is received, send it out over the serial port. If the reception was unsuccessful,
+	// Once a UDP datagram is received, send it out over the serial port. If the reception was unsuccessfu,	l	
 	// print an error message.
 	if (!error || error == boost::asio::error::message_size) {
-		boost::asio::async_write(
-			*serialPort,
-			boost::asio::buffer(udp_receive_buffer, bytes_transferred),
-			&handle_serial_send
-		);
+		int i;
+		for (i = 0; i < bytes_transferred; ++i) {
+			HilBuildMessage(udp_receive_buffer[i]);
+			if (newHilData) {
+
+				// And send it off
+				udpSocket->async_send_to(
+					boost::asio::buffer(txWrapper, sizeof(txWrapper)),
+					remote_endpoint_tx,
+					&handle_udp_send
+				);
+				newHilData = false;
+			}
+		}
+		//boost::asio::async_write(
+		//	*serialPort,
+		//	boost::asio::buffer(udp_receive_buffer, bytes_transferred),
+		//	&handle_serial_send
+		//);
 
 	} else if (error != boost::asio::error::connection_refused) {
 		print_error(error.message());
@@ -188,7 +233,7 @@ void handle_serial_receive(const boost::system::error_code& error, size_t bytes_
 
 		udpSocket->async_send_to(
 			boost::asio::buffer(serial_receive_buffer, bytes_transferred),
-			remote_endpoint,
+			remote_endpoint_tx,
 			&handle_udp_send
 		);
 	} else if (error != boost::asio::error::connection_refused) {
