@@ -23,10 +23,10 @@ Prerequisites:
 
 #### Install Boost (http://www.boost.org/)
 1. Download the Boost library from boost.org
-2. Extract the library to C:\boost_1_48_0_x64 (changing 1_48 to whatever your version is)
-3. (Following the build instructions for x86-64 1.48) Open a command prompt and enter the root directory of the Boost files.
+2. Extract the library to C:\boost_1_51_0 (changing 1_51 to whatever your version is)
+3. (Following the build instructions for x86-64 1.51) Open a command prompt and enter the root directory of the Boost files.
 4. Run `bootstrap.bat`
-5. Compile for x86-64 by running `bjam msvc-10.0 variant=release link=static threading=multi runtime-link=static architecture=x86 address-mode=64-bit --stage-dir=stage64`
+5. Compile for x86-64 by running `.\b2 --toolset=msvc-10.0 variant=release link=static threading=multi runtime-link=static architecture=x86 address-mode=64`
   - This will build only the multi-threaded statically-linked release build that is necessary for this project. If you'd like to use this Boost installation for debugging or other projects you'll probably want to just build everything by switching out the 'variant=release link=static threading=multi runtime-link=static' options for '--build-type=complete' instead.
 
 #### Building the program
@@ -37,23 +37,24 @@ I only include instructions for building this project for x64 as that is my prim
 
 1. Create a new MSVC++ 2010 Win32 Console Application project
   - Specify Empty Project within the wizard
-2. Modify the project to add the root Boost folder ('C:\boost_1_48_0_x64' if following the above instructions) to the header path
+2. Add serial2udp.cpp to the project by right-clicking on the Sources folder in the Solution Explorer.
+3. Modify the project to add the root Boost folder ('C:\boost_1_51_0' if following the above instructions) to the header path
   - Properties->C/C++->General->Additional Include Directories
-3. Modify the project to use the static non-debug version of the Boost library 
+4. Modify the project to use the static non-debug version of the Boost library 
   - Properties->C/C++->Code Generation->Runtime Library
-4. Modify the project to add the Boost libraries for linking ('C:\boost_1_48_x64\stage64\lib\' if following the above instructions)
+5. Modify the project to add the Boost libraries for linking ('C:\boost_1_51_0\stage\lib\' if following the above instructions)
   - Properties->C/C++->Linker->General->Additional Library Directories
-5. Disable use of precompiled headers
+6. Disable use of precompiled headers
   - Set Properties->C/C++->Precompiled Headers to 'Not Using Precompiled Headers'
-6. Set compilation for a statically-linked multi-threaded library
+7. Set compilation for a statically-linked multi-threaded library
   - Set Properties->C/C++->Code Generation->Runtime Library to 'Multi-threaded (/MT)'
-7. Specify building for an x64 release target
+8. Specify building for an x64 release target
   - Build->Configuration Manager->Active Solution Platform->New...->OK
   - Under 'Platform'  select the new x64 target.
   - Under 'Configuration' select 'Release'
-8. Build it
+9. Build it
   - Ctrl-Shift-B or Build->Build Solution
-9. Run it
+10. Run it
   - The executeable will be in '/x64/Release/'
 
 
