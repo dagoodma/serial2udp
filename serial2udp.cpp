@@ -16,8 +16,6 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/program_options.hpp>
 
-#include "Hil.h"
-
 // Set up some shorthand for namespaces
 namespace po = boost::program_options;
 
@@ -118,7 +116,6 @@ int main(int ac, char* av[])
 	cout << "Listening for messages from " << opt_remote_addr << ", any port." << endl;
 	cout << "Transmitting to " << opt_remote_addr << ":" << opt_remote_socket << "." << endl; 
 
-	/*
 	// Create and start the serial port.
 	try {
 		serialPort = new boost::asio::serial_port(io_service, opt_port);
@@ -138,7 +135,7 @@ int main(int ac, char* av[])
 		cerr << "Failed to open serial port: " << opt_port << ". Does it exist?" << endl;
 		return 1;
 	}
-	*/
+
 	try {
 		// Then start everything running
 		io_service.run();
@@ -183,26 +180,11 @@ void handle_udp_receive(const boost::system::error_code& error, size_t bytes_tra
 	// Once a UDP datagram is received, send it out over the serial port. If the reception was unsuccessfu,	l	
 	// print an error message.
 	if (!error || error == boost::asio::error::message_size) {
-		int i;
-		for (i = 0; i < bytes_transferred; ++i) {
-			HilBuildMessage(udp_receive_buffer[i]);
-			if (newHilData) {
-
-				// And send it off
-				udpSocket->async_send_to(
-					boost::asio::buffer(txWrapper, sizeof(txWrapper)),
-					remote_endpoint_tx,
-					&handle_udp_send
-				);
-				newHilData = false;
-			}
-		}
-		//boost::asio::async_write(
-		//	*serialPort,
-		//	boost::asio::buffer(udp_receive_buffer, bytes_transferred),
-		//	&handle_serial_send
-		//);
-
+		boost::asio::async_write(
+			*serialPort,
+			boost::asio::buffer(udp_receive_buffer, bytes_transferred),
+			&handle_serial_send
+		);
 	} else if (error != boost::asio::error::connection_refused) {
 		print_error(error.message());
 	}
@@ -230,7 +212,6 @@ void handle_serial_receive(const boost::system::error_code& error, size_t bytes_
 {
 	// If there isn't an error or the error is just one about message size
 	if (!error || error == boost::asio::error::message_size) {
-
 		udpSocket->async_send_to(
 			boost::asio::buffer(serial_receive_buffer, bytes_transferred),
 			remote_endpoint_tx,
