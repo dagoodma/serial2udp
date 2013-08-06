@@ -49,23 +49,21 @@ I only include instructions for building this project for x64 and x86 as that is
 2. Add 'serial2udp.cpp' and 'slugs_parser\SlugsMavlink.cpp' to the project by right-clicking on the Sources folder in the Solution Explorer.
 3. Add 'slugs_parser\Packing.h' and 'slugs_parser\SlugsMavlink.h' to the project by right-clicking on the Header Files folder in the Solution Explorer.
 4. Visual Studio does not support C types, so inttypes.h must be obtained and copied into the root of your project's source folder (ie. 'MyProject/MyProject' if your VS2010 project were called 'MyProject'). This header can be found under the 'slugs_parser_vs10' branch at 'HILBridgeClient\HILBridgeClient\inttypes.h'.
-5. Modify the project to add the folder with inttypes.h ('.\' if following step 4), the root Boost folder ('C:\boost_1_51_0' if following the above instructions), and the root of the SLUGS MAVLink include folder to the header path
+5. Specify building for an x64 release target. Skip this step if you are using x86, and just change 'Debug' in the Solutions Configurations dropdown menu to 'Release'.
+  - Build->Configuration Manager->Active Solution Platform->New...->OK
+  - Under 'Platform'  select the new x64 target.
+  - Under 'Configuration' select 'Release'
+6. Modify the project to add the folder with inttypes.h ('.\' if following step 4), the root Boost folder ('C:\boost_1_51_0' if following the above instructions), and the root of the SLUGS MAVLink include folder to the header path
   - Properties->C/C++->General->Additional Include Directories
-6. Modify the project to use the static non-debug version of the Boost library 
-  - Properties->C/C++->Code Generation->Runtime Library
 7. Modify the project to add the Boost libraries for linking ('C:\boost_1_51_0\stage\lib\' if following the above instructions)
   - Properties->C/C++->Linker->General->Additional Library Directories
 8. Disable use of precompiled headers
   - Set Properties->C/C++->Precompiled Headers to 'Not Using Precompiled Headers'
 9. Set compilation for a statically-linked multi-threaded library
   - Set Properties->C/C++->Code Generation->Runtime Library to 'Multi-threaded (/MT)'
-10. Specify building for an x64 release target. Skip this step if you are using x86
-  - Build->Configuration Manager->Active Solution Platform->New...->OK
-  - Under 'Platform'  select the new x64 target.
-  - Under 'Configuration' select 'Release'
-11. Build it
+10. Build it
   - Ctrl-Shift-B or Build->Build Solution
-12. Run it
+11. Run it
   - The executeable will be in '/x64/Release/' or under '/Release/' for x86.
 
 
