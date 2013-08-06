@@ -17,7 +17,7 @@ side it must be larger than the largest expected UDP datagram size otherwise the
 
 This version of serial2udp has been modified for use as a communication bridge for the SLUGS autopilot while in hardware in the loop (HIL) simulation. This invovles converting UDP packets from the HIL simulation model in Simulink to MAVLink messages to be sent to the autopilot. The parser will also parse MAVLink messages from the autopilot and pack them into UDP packets to be sent to Simulink. 
 
-To accomplish this, many arguments were added to serial2udp to allow for separate UDP receive and send sockets. This was tested and works on Windows 7 with a Visual Studio 2010 project. Additional folders were added to the include path to make this work. To obtain the Visual 2010 project as is, see the 'slugs_parser_vs10' branch.
+To accomplish this, many arguments were added to serial2udp to allow for separate UDP receive and send sockets. This was tested and works on Windows 7 with a Visual Studio 2010 project. Additional folders were added to the include path to make this work. To obtain the Visual 2010 project as is, see the 'slugs_parser_vs10' branch. If using the existing project, then be sure to change the include directories to point to the proper locations (under Properties->C/C++->General->Additional Include Directories).
 
 ## Building
 
