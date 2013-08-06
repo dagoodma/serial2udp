@@ -171,7 +171,6 @@ boost::tuple<uint8_t*, size_t> SlugsMavlinkParser::assemble_udp_pwm_command() {
  *	 the two on each call) to the round robin message.
  */
 boost::tuple<uint8_t*, size_t> SlugsMavlinkParser::assemble_mavlink_message(uint8_t* rawUdpData, HilMessageType type) { 
-	//uint8_t i = 0;
 	uint8_t *msgBuf = new uint8_t[MAVLINK_SERIAL_BUFFER_SIZE];
 	mavlink_message_t msg = {};
 	size_t len = 0;
@@ -307,9 +306,6 @@ boost::tuple<uint8_t*, size_t> SlugsMavlinkParser::assemble_mavlink_message(uint
 	
 	len = mavlink_msg_to_send_buffer(msgBuf, &msg);
 	
-#ifdef DEBUG
-	//cout << "Created MAVLink HIL message type " << type << " with size " << len << "." << endl;
-#endif
 
 	return boost::tuple<uint8_t*, size_t>(msgBuf, len);
 }

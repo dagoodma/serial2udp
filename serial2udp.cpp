@@ -244,35 +244,17 @@ void print_hex(const char *s)
  */
 void handle_udp_receive(const boost::system::error_code& error, size_t bytes_transferred)
 {
-	//cout << "HERE!" << endl;
 	// Once a UDP datagram is received, send it out over the serial port. If the reception was unsuccessful,	
 	// print an error message.
-	//cout << "Got UDP " << bytes_transferred << " bytes." << endl;
 	if (!error || error == boost::asio::error::message_size) {
 
         // Simulink to Autopilot (udp to mavlink serial)
         #ifdef PARSE_SLUGS_MAVLINK
-		///*
 		size_t old_size = bytes_transferred;
 		boost::tuple<uint8_t*, size_t> t = parser->parse_udp2serial(
 			reinterpret_cast<uint8_t*>(udp_receive_buffer), bytes_transferred);
 		char *udp_receive_buffer = reinterpret_cast<char*>(t.get<0>());
 		size_t bytes_transferred = t.get<1>();
-		//*/
-
-		// My Tests (bad form to put it here)
-		/*
-		cout << "Raw MAVLINK: ";
-		print_hex(udp_receive_buffer);
-		// Parse mavlink
-		mavlink_message_t msg;
-		mavlink_status_t status;
-		for (uint16_t i = 0; i < bytes_transferred; i++) {
-			mavlink_parse_char(0, udp_receive_buffer[i], &msg, &status);
-		}
-		printf("Going to send MAVLink message (%d) with status: %d.\r\n", msg.msgid, status.parse_error);
-		//cout << "Going to send MAVLink message (" << msg.msgid << ") with status: " << status.parse_error << endl;
-		*/
         #endif
 
 		boost::asio::async_write(
@@ -281,8 +263,6 @@ void handle_udp_receive(const boost::system::error_code& error, size_t bytes_tra
 			&handle_serial_send
 		);
 
-		//cout << "Received and forwarded " << bytes_transferred << " UDP bytes." << endl;
-		//cout << "Received " << old_size << " UDP bytes and transmitted: " << bytes_transferred << "." << endl;
 	} else if (error != boost::asio::error::connection_refused) {
 		print_error(error.message());
 	}
@@ -306,7 +286,6 @@ void handle_udp_send(const boost::system::error_code& error, size_t bytes_transf
 /**
  * This function deals with a buffer full of serial data. More specifically it sends the buffer off in a UDP
  * datagram if there isn't an error and resumes waiting.
- * TODO add mavlink message parsing here
  */
 void handle_serial_receive(const boost::system::error_code& error, size_t bytes_transferred)
 {
@@ -314,7 +293,6 @@ void handle_serial_receive(const boost::system::error_code& error, size_t bytes_
 	if (!error || error == boost::asio::error::message_size) {
     
         // Autopilot to UDP (serial mavlink to simulink udp)
-        // TODO Need to wait for LOGSIZE=254 to send udp packet out
         #ifdef PARSE_SLUGS_MAVLINK
 		boost::tuple<uint8_t*, size_t> t = parser->parse_serial2udp(
 			reinterpret_cast<uint8_t*>(serial_receive_buffer), bytes_transferred);
