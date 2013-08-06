@@ -15,8 +15,8 @@
 #define SLUGS_MAVLINK_PARSER_H
 
 #include <boost/tuple/tuple.hpp>
-#include "mavlink\slugs\common\mavlink.h"
-#include "mavlink\slugs\slugs\slugs.h"
+#include "common\mavlink.h"
+#include "slugs\slugs.h"
 
 /******************************************************************************
  * PUBLIC FUNCTIONS                                                           *
