@@ -66,7 +66,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>C:\boost_1_54_0;.\;C:\Users\dagoodma\Documents\apcode_2011b_mavlinkv1.0\HILSim\new_client\slugs_parser;Z:\Documents\ASL\mavlink\slugs</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\slugs_parser;C:\boost_1_54_0;.\;C:\Users\dagoodma\Documents\apcode_2011b_mavlinkv1.0\HILSim\new_client\slugs_parser;Z:\Documents\ASL\mavlink\slugs</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
