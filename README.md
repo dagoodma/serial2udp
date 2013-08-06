@@ -53,7 +53,7 @@ I only include instructions for building this project for x64 and x86 as that is
   - Build->Configuration Manager->Active Solution Platform->New...->OK
   - Under 'Platform'  select the new x64 target.
   - Under 'Configuration' select 'Release'
-6. Modify the project to add the folder with inttypes.h ('.\' if following step 4), the root Boost folder ('C:\boost_1_51_0' if following the above instructions), and the root of the SLUGS MAVLink include folder to the header path
+6. Modify the project to add the folder with inttypes.h ('.\' if following step 4), the root Boost folder ('C:\boost_1_51_0' if following the above instructions), the slugs_parser folder ('..\..\slugs_parser'),  and the root of the MAVLink include folder (with SLUGS generated headers) to the header path
   - Properties->C/C++->General->Additional Include Directories
 7. Modify the project to add the Boost libraries for linking ('C:\boost_1_51_0\stage\lib\' if following the above instructions)
   - Properties->C/C++->Linker->General->Additional Library Directories
