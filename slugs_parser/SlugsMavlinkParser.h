@@ -39,7 +39,7 @@ class SlugsMavlinkParser {
 		unsigned int round_robin_index;
 		bool send_attitude;
 		boost::tuple<uint8_t*, size_t> assemble_udp_pwm_command();
-		boost::tuple<uint8_t*, size_t> assemble_mavlink_message(uint8_t*, HilMessageType);
+		size_t assemble_mavlink_message(uint8_t*, uint8_t*, HilMessageType);
 		bool is_ok;
 };
 
