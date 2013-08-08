@@ -18,6 +18,10 @@
 #include "common\mavlink.h"
 #include "slugs\slugs.h"
 
+
+typedef enum _HilMessageType {HIL_GPS, HIL_GPS_DATE_TIME, HIL_AIR, HIL_RAW, HIL_RAW_AIR,
+	HIL_ATTITUDE, HIL_XYZ, HIL_MSG_COUNT} HilMessageType;
+
 /******************************************************************************
  * PUBLIC FUNCTIONS                                                           *
  ******************************************************************************/
@@ -32,11 +36,10 @@ class SlugsMavlinkParser {
 		boost::tuple<uint8_t*, size_t> parse_serial2udp(uint8_t*, size_t);
 		bool isOk();
 	private: 
-		enum HilMessageType {HIL_GPS, HIL_GPS_DATE_TIME, HIL_AIR, HIL_RAW, HIL_RAW_AIR,
-            HIL_ATTITUDE, HIL_XYZ, HIL_MSG_COUNT} round_robin_type;
+		unsigned int round_robin_index;
 		bool send_attitude;
 		boost::tuple<uint8_t*, size_t> assemble_udp_pwm_command();
-		boost::tuple<uint8_t*, size_t> assemble_mavlink_message(uint8_t*, HilMessageType);
+		size_t assemble_mavlink_message(uint8_t*, uint8_t*, HilMessageType);
 		bool is_ok;
 };
 

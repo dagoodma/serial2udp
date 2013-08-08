@@ -16,13 +16,15 @@ using namespace std;
 
 #include <boost/array.hpp>
 #include <boost/asio.hpp>
+#include <vector>
 #include "Packing.h"
 #include "SlugsMavlinkParser.h"
 
+// Outgoing buffer sizes determined by the longest message.
 #define PWM_COMMAND_BUFFER_SIZE		20
 #define MAVLINK_SERIAL_BUFFER_SIZE	100
 
-// UDP data offsets
+// Byte offset values for starting location of data in Simulink UDP packets
 #define HIL_GPS_START			6 // skips date time fields
 #define HIL_GPS_DATE_TIME_START	0
 #define HIL_AIR_START			27
@@ -31,22 +33,30 @@ using namespace std;
 #define HIL_ATTITUDE_START      61
 #define HIL_XYZ_START			89
 
+// List of offsets indexed by HilMessageType
 unsigned char udp_data_offset[] = {HIL_GPS_START, HIL_GPS_DATE_TIME_START, HIL_AIR_START, HIL_RAW_START, HIL_RAW_AIR_START,
 	HIL_ATTITUDE_START, HIL_XYZ_START};
+
+// Order to send HIL messages for round robin (attitude or position every other are packed with each)
+static const HilMessageType hil_message_order[] = {HIL_GPS, HIL_GPS_DATE_TIME, HIL_AIR, HIL_RAW, HIL_RAW_AIR};
+
+unsigned int hil_list_length =  sizeof(hil_message_order) / sizeof(hil_message_order[0]);
 
 
 /******************************************************************************
  * PUBLIC FUNCTIONS                                                           *
  ******************************************************************************/
 
+/**
+ * @brief Constructor for SLUGS MAVLink parser.
+ */
 SlugsMavlinkParser::SlugsMavlinkParser(int autopilot_system_id, int autopilot_comp_id, int gs_system_id, int gs_comp_id) {
 	this->autopilot_system_id = autopilot_system_id;
 	this->autopilot_comp_id = autopilot_comp_id;
 	this->gs_system_id = gs_system_id;
 	this->gs_comp_id = gs_comp_id;
 	is_ok = true;
-	send_attitude = false; // send attitude first
-	round_robin_type = HIL_GPS; // send GPS message first
+	round_robin_index = 0;
 }
 
 /**
@@ -70,31 +80,43 @@ bool SlugsMavlinkParser::isOk() {
  *  
  */
 boost::tuple<uint8_t*, size_t> SlugsMavlinkParser::parse_udp2serial(uint8_t *buf, size_t bytes) {
+	// Persistent variable to toggle sending of either attitude or position along with message
+	static bool sent_attitude_last = false;
 
-	round_robin_type = static_cast<HilMessageType>((round_robin_type + 1) % HIL_MSG_COUNT);
+	// Choose message type to send and increment index
+	HilMessageType message_type = hil_message_order[round_robin_index++];
+	if (round_robin_index >= hil_list_length) round_robin_index = 0;
 
-	// Returns the new buffer with round robin and attitude or position message in it
-    switch(round_robin_type) {
+	// Create a new buffer for two messages
+	uint8_t *newBuf = new uint8_t[MAVLINK_SERIAL_BUFFER_SIZE * 2];
+	size_t newLen = 0;
+
+	// Returns a new buffer with the specified mavlink message filled and packed into it
+	switch(message_type) {
 		case HIL_GPS:
-			return assemble_mavlink_message(buf, HIL_GPS);
+			newLen = assemble_mavlink_message(buf, newBuf, HIL_GPS);
 		case HIL_GPS_DATE_TIME:
-			return assemble_mavlink_message(buf, HIL_GPS_DATE_TIME);
+			newLen = assemble_mavlink_message(buf, newBuf, HIL_GPS_DATE_TIME);
 		case HIL_AIR:
-			return assemble_mavlink_message(buf, HIL_AIR);
+			newLen = assemble_mavlink_message(buf, newBuf, HIL_AIR);
 		case HIL_RAW:
-			return assemble_mavlink_message(buf, HIL_RAW);
+			newLen = assemble_mavlink_message(buf, newBuf, HIL_RAW);
 		case HIL_RAW_AIR:
-			return assemble_mavlink_message(buf, HIL_RAW_AIR);
-		case HIL_ATTITUDE:
-			return assemble_mavlink_message(buf, HIL_ATTITUDE);
-		case HIL_XYZ:
-			return assemble_mavlink_message(buf, HIL_XYZ);
+			newLen = assemble_mavlink_message(buf, newBuf, HIL_RAW_AIR);
 		default:
 			throw "Bad round robin type!";
 	}
 
+	// Pack attitude of position onto the end
+	if (sent_attitude_last) 
+		newLen += assemble_mavlink_message(buf, &newBuf[newLen], HIL_ATTITUDE);
+	else
+		newLen += assemble_mavlink_message(buf, &newBuf[newLen], HIL_XYZ);
+
+	sent_attitude_last ^= 1;
+
 	// Unhandled message, return as is
-    return boost::tuple<uint8_t*, size_t>(buf, bytes);
+    return boost::tuple<uint8_t*, size_t>(newBuf, newLen);
 }
 
 /**
@@ -118,7 +140,7 @@ boost::tuple<uint8_t*, size_t> SlugsMavlinkParser::parse_serial2udp(uint8_t *buf
         }
     }
 
-	// Unhandled message, return as is
+	// Unhandled message, return as is ?
     return boost::tuple<uint8_t*, size_t>(buf, bytes);
 }
 
@@ -164,14 +186,12 @@ boost::tuple<uint8_t*, size_t> SlugsMavlinkParser::assemble_udp_pwm_command() {
 
 /*
  * @param Raw UDP message from simulink.
- * @param Type of message to send for round robin sending.
- * @return A tuple, were the first element is the buffer, and second is the size.
- * @brief Packs mavlink messages into a buffer depending on the desired message type.
- * @note This function will append either a position or an attitude message (toggles between
- *	 the two on each call) to the round robin message.
+ * @param Type of MAVLink HIL message to send (see hil_message_order[] for ordered list.
+ * @return The size of the messages that was packed into the buffer.
+ * @brief Packs a mavlink message with the specified type into a buffer using raw UDP data.
  */
-boost::tuple<uint8_t*, size_t> SlugsMavlinkParser::assemble_mavlink_message(uint8_t* rawUdpData, HilMessageType type) { 
-	uint8_t *msgBuf = new uint8_t[MAVLINK_SERIAL_BUFFER_SIZE];
+size_t SlugsMavlinkParser::assemble_mavlink_message(uint8_t* rawUdpData, uint8_t* buf, HilMessageType type) { 
+	//uint8_t *msgBuf = new uint8_t[MAVLINK_SERIAL_BUFFER_SIZE];
 	mavlink_message_t msg = {};
 	size_t len = 0;
 
@@ -304,8 +324,6 @@ boost::tuple<uint8_t*, size_t> SlugsMavlinkParser::assemble_mavlink_message(uint
 		}
 	} // switch(type))
 	
-	len = mavlink_msg_to_send_buffer(msgBuf, &msg);
-	
-
-	return boost::tuple<uint8_t*, size_t>(msgBuf, len);
+	len = mavlink_msg_to_send_buffer(buf, &msg);
+	return len;
 }
