@@ -161,7 +161,7 @@ boost::tuple<uint8_t*, size_t> SlugsMavlinkParser::assemble_udp_pwm_command() {
     uint8_t *send_buffer = new uint8_t[PWM_COMMAND_BUFFER_SIZE];
 
     // Find timestamp in microseconds
-	uint32_t timeStampUsec = mlAttitudeData.time_boot_ms * 1000;
+	uint32_t timeStampUsec = mlAttitudeData.time_boot_ms;
     
     mavlink_servo_output_raw_t pwmSampleLocal = mlPwmCommands;
     uint16_t rawServoData[8] = { pwmSampleLocal.servo1_raw, pwmSampleLocal.servo2_raw,
@@ -295,7 +295,7 @@ size_t SlugsMavlinkParser::assemble_mavlink_message(uint8_t* rawUdpData, uint8_t
 			LEUnpackReal32(&mlAttitude.yawspeed, &rawUdpData[i+20]);
 
 			LEUnpackUint32(&mlAttitude.time_boot_ms, &rawUdpData[i+24]);
-			mlAttitude.time_boot_ms = mlAttitude.time_boot_ms / 1000; // TODO make simulink send ms
+			//mlAttitude.time_boot_ms = mlAttitude.time_boot_ms / 1000; // TODO make simulink send ms
 			// Encode MAVLink message
 			#ifdef DEBUG
 			cout << "Packed Attitude message: " << mlAttitude.roll << ", " <<  mlAttitude.pitch <<", " << mlAttitude.yaw << "." << endl; 
