@@ -8,11 +8,11 @@
 * Created on July 26, 2013 
 */
 //#define DEBUG
-#ifdef DEBUG
+//#ifdef DEBUG
 #include <iostream>
 #include <string>
 using namespace std;
-#endif
+//#endif
 
 #include <boost/array.hpp>
 #include <boost/asio.hpp>
@@ -57,6 +57,11 @@ SlugsMavlinkParser::SlugsMavlinkParser(int autopilot_system_id, int autopilot_co
 	this->gs_comp_id = gs_comp_id;
 	is_ok = true;
 	round_robin_index = 0;
+
+	mlAttitudeData.time_boot_ms = 0;
+#ifdef DEBUG
+	cout << "Slugs parser initialized in DEBUG mode!" << endl;
+#endif
 }
 
 /**
@@ -95,27 +100,34 @@ boost::tuple<uint8_t*, size_t> SlugsMavlinkParser::parse_udp2serial(uint8_t *buf
 	switch(message_type) {
 		case HIL_GPS:
 			newLen = assemble_mavlink_message(buf, newBuf, HIL_GPS);
+			break;
 		case HIL_GPS_DATE_TIME:
 			newLen = assemble_mavlink_message(buf, newBuf, HIL_GPS_DATE_TIME);
+			break;
 		case HIL_AIR:
 			newLen = assemble_mavlink_message(buf, newBuf, HIL_AIR);
+			break;
 		case HIL_RAW:
 			newLen = assemble_mavlink_message(buf, newBuf, HIL_RAW);
+			break;
 		case HIL_RAW_AIR:
 			newLen = assemble_mavlink_message(buf, newBuf, HIL_RAW_AIR);
+			break;
 		default:
 			throw "Bad round robin type!";
+			break;
 	}
 
 	// Pack attitude of position onto the end
-	if (sent_attitude_last) 
+	if (sent_attitude_last)  {
 		newLen += assemble_mavlink_message(buf, &newBuf[newLen], HIL_ATTITUDE);
-	else
+	}
+	else {
 		newLen += assemble_mavlink_message(buf, &newBuf[newLen], HIL_XYZ);
+	}
 
 	sent_attitude_last ^= 1;
 
-	// Unhandled message, return as is
     return boost::tuple<uint8_t*, size_t>(newBuf, newLen);
 }
 
@@ -279,7 +291,9 @@ size_t SlugsMavlinkParser::assemble_mavlink_message(uint8_t* rawUdpData, uint8_t
 			#ifdef DEBUG
 			cout << "Packed Raw Air Data message: " << mlRawPressure.press_diff1 << ", " <<  mlRawPressure.press_abs <<", " << mlRawPressure.temperature << "." << endl; 
 			#endif
+
 			mavlink_msg_raw_pressure_encode(autopilot_system_id, autopilot_comp_id, &msg, &mlRawPressure);
+			
 			break;
 		}
 		case HIL_ATTITUDE:
@@ -295,10 +309,11 @@ size_t SlugsMavlinkParser::assemble_mavlink_message(uint8_t* rawUdpData, uint8_t
 			LEUnpackReal32(&mlAttitude.yawspeed, &rawUdpData[i+20]);
 
 			LEUnpackUint32(&mlAttitude.time_boot_ms, &rawUdpData[i+24]);
-			//mlAttitude.time_boot_ms = mlAttitude.time_boot_ms / 1000; // TODO make simulink send ms
+
+
 			// Encode MAVLink message
 			#ifdef DEBUG
-			cout << "Packed Attitude message: " << mlAttitude.roll << ", " <<  mlAttitude.pitch <<", " << mlAttitude.yaw << "." << endl; 
+			cout << "***Packed Attitude message: time=" << mlAttitude.time_boot_ms << "." << endl;
 			#endif
 			mavlink_msg_attitude_encode(autopilot_system_id, autopilot_comp_id, &msg, &mlAttitude);
 			break;
