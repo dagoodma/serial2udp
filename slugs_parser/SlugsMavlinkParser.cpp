@@ -27,11 +27,11 @@ using namespace std;
 // Byte offset values for starting location of data in Simulink UDP packets
 #define HIL_GPS_START			6 // skips date time fields
 #define HIL_GPS_DATE_TIME_START	0
-#define HIL_AIR_START			27
-#define HIL_RAW_START			37
-#define HIL_RAW_AIR_START		55
-#define HIL_ATTITUDE_START      61
-#define HIL_XYZ_START			89
+#define HIL_AIR_START			28
+#define HIL_RAW_START			38
+#define HIL_RAW_AIR_START		56
+#define HIL_ATTITUDE_START      62
+#define HIL_XYZ_START			90	
 
 // List of offsets indexed by HilMessageType
 unsigned char udp_data_offset[] = {HIL_GPS_START, HIL_GPS_DATE_TIME_START, HIL_AIR_START, HIL_RAW_START, HIL_RAW_AIR_START,
@@ -215,12 +215,13 @@ size_t SlugsMavlinkParser::assemble_mavlink_message(uint8_t* rawUdpData, uint8_t
 		{
 			mavlink_gps_raw_int_t mlGpsData = {};
 			// Parse UDP into MAVLink
-			LEUnpackInt32(&mlGpsData.lat, &rawUdpData[i]); 
-			LEUnpackInt32(&mlGpsData.lon, &rawUdpData[i+4]);
-			LEUnpackInt32(&mlGpsData.alt, &rawUdpData[i+8]);
-			LEUnpackUint16(&mlGpsData.cog, &rawUdpData[i+12]);
-			LEUnpackUint16(&mlGpsData.vel, &rawUdpData[i+14]);
-			LEUnpackUint16(&mlGpsData.eph, &rawUdpData[i+16]);
+			mlGpsData.fix_type = rawUdpData[i];
+			LEUnpackInt32(&mlGpsData.lat, &rawUdpData[i+1]); 
+			LEUnpackInt32(&mlGpsData.lon, &rawUdpData[i+5]);
+			LEUnpackInt32(&mlGpsData.alt, &rawUdpData[i+9]);
+			LEUnpackUint16(&mlGpsData.cog, &rawUdpData[i+13]);
+			LEUnpackUint16(&mlGpsData.vel, &rawUdpData[i+15]);
+			LEUnpackUint16(&mlGpsData.eph, &rawUdpData[i+17]);
 #ifdef DEBUG
 			cout << "Packed GPS message: " << mlGpsData.lat << ", " <<  mlGpsData.lon <<", " <<  mlGpsData.alt <<", cog:" <<  mlGpsData.cog << ", vel:" <<  mlGpsData.vel << "." << endl; 
 #endif
@@ -313,7 +314,7 @@ size_t SlugsMavlinkParser::assemble_mavlink_message(uint8_t* rawUdpData, uint8_t
 
 			// Encode MAVLink message
 			#ifdef DEBUG
-			cout << "***Packed Attitude message: time=" << mlAttitude.time_boot_ms << "." << endl;
+			cout << "Packed Attitude message: time=" << mlAttitude.time_boot_ms << "." << endl;
 			#endif
 			mavlink_msg_attitude_encode(autopilot_system_id, autopilot_comp_id, &msg, &mlAttitude);
 			break;
